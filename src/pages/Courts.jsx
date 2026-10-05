@@ -5,6 +5,7 @@ import courts from "../data/courts.json";
 import CourtCard from "../components/CourtCard.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import PageHead from "../components/PageHead.jsx";
+import BackButton from "../components/BackButton.jsx";
 import SortSelect from "../components/SortSelect.jsx";
 import useCourtFilters from "../useCourtFilters.js";
 import useMedia from "../useMedia.js";
@@ -24,7 +25,7 @@ export default function Courts() {
 
   return (
     <>
-      <PageHead eyebrow="Directory" title="All courts">
+      <PageHead back={<BackButton fallback={null} />} eyebrow="Directory" title="All courts">
         <div className="pagehead-row">
           <p className="muted">Filter, sort and save the courts you like.</p>
           <Link className="btn" to={`/map${search}`}><MapIcon size={18} aria-hidden="true" />View on map</Link>

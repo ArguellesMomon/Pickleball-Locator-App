@@ -28,8 +28,10 @@ const FAQ = [
 function SuggestForm() {
   const [v, setV] = useState({ name: "", town: "", notes: "" });
   const [copied, setCopied] = useState(false);
+  const ready = Boolean(v.name.trim() || v.notes.trim()); // nothing to send yet
   const message = `New court suggestion for Pickle Batangas\n\nCourt name: ${v.name}\nTown: ${v.town}\nDetails (hours, phone, Facebook page): ${v.notes}`;
   const field = (key) => ({ value: v[key], onChange: (e) => setV({ ...v, [key]: e.target.value }) });
+  const copy = async () => { try { await navigator.clipboard.writeText(message); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { /* clipboard blocked */ } };
   return (
     <div className="suggest">
       <h3>Suggest a court or a correction</h3>
@@ -37,12 +39,15 @@ function SuggestForm() {
       <label>Town<input {...field("town")} placeholder="e.g. Lipa City" /></label>
       <label>Details<textarea rows="3" {...field("notes")} placeholder="Hours, phone, Facebook page, or what needs fixing" /></label>
       <div className="row">
-        {CONTACT_EMAIL && <a className="btn primary" href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Pickle Batangas court")}&body=${encodeURIComponent(message)}`}><Send size={18} aria-hidden="true" />Send by email</a>}
-        <button type="button" className="btn ghost dark" onClick={async () => { await navigator.clipboard.writeText(message); setCopied(true); }}>
+        {CONTACT_EMAIL && <a className={`btn primary ${ready ? "" : "off"}`} aria-disabled={!ready} href={ready ? `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Pickle Batangas court")}&body=${encodeURIComponent(message)}` : undefined}><Send size={18} aria-hidden="true" />Send by email</a>}
+        {!CONTACT_EMAIL && FACEBOOK_URL && <a className={`btn primary ${ready ? "" : "off"}`} aria-disabled={!ready} href={ready ? FACEBOOK_URL : undefined} target="_blank" rel="noreferrer" onClick={copy}><FacebookIcon size={18} />Send on Facebook</a>}
+        <button type="button" className="btn ghost dark" disabled={!ready} onClick={copy}>
           {copied ? <Check size={18} aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}{copied ? "Copied" : "Copy message"}
         </button>
       </div>
-      {!CONTACT_EMAIL && <p className="muted">Copy the message and send it to the developer using one of the links on this page.</p>}
+      <p className="muted">{!ready ? "Fill in at least the court name or the details to continue."
+        : CONTACT_EMAIL || FACEBOOK_URL ? "Your message opens ready to send. Nothing is sent until you press send."
+        : "Copy your message, then send it to the developer using the contact links below."}</p>
     </div>
   );
 }
@@ -57,10 +62,9 @@ export default function About() {
 
   return (
     <>
-      <PageHead eyebrow="About" title="Made for Batangas players">
+      <PageHead back={<BackButton fallback="/" label="Home" />} eyebrow="About" title="Made for Batangas players">
         <p className="muted lede-light">One place to find a pickleball court near you, check if it's open, and get there.</p>
         <dl className="stats"><div><dt>Courts</dt><dd>{nCourts}</dd></div><div><dt>Cities and towns</dt><dd>{nTowns}</dd></div></dl>
-        <BackButton fallback="/" label="Home" />
       </PageHead>
 
       <div className="page pull about">

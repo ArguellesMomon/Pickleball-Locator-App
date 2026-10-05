@@ -61,7 +61,8 @@ export default function App() {
     const onScroll = () => {
       const y = window.scrollY;
       if (Math.abs(y - last) < 10) return;
-      document.body.classList.toggle("dock-hidden", y > last && y > 120);
+      const nearEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 160; // always show the bar at the end of a page
+      document.body.classList.toggle("dock-hidden", y > last && y > 120 && !nearEnd);
       last = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });

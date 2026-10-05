@@ -20,17 +20,18 @@ function layoutTowns() {
   towns.forEach((t, i) => {
     t.x = PAD + (W - 2 * PAD - (x1 - x0) * scale) / 2 + (xs[i] - x0) * scale;
     t.y = PAD + (H - 2 * PAD - (y1 - y0) * scale) / 2 + (ys[i] - y0) * scale;
-    t.r = 24 + Math.min(t.list.length, 8) * 3.5;
+    t.r = 20 + Math.min(t.list.length, 8) * 3;
   });
-  for (let n = 0; n < 80; n++) { // nudge overlapping bubbles apart so every one can be tapped
+  const keepInside = (t) => { t.x = Math.min(W - t.r - 20, Math.max(t.r + 20, t.x)); t.y = Math.min(H - t.r - 36, Math.max(t.r + 16, t.y)); }; // bottom margin = room for the name
+  for (let n = 0; n < 300; n++) { // nudge bubbles apart, leaving room for each town's name, so every one can be tapped
     for (let i = 0; i < towns.length; i++) for (let j = i + 1; j < towns.length; j++) {
       const a = towns[i], b = towns[j];
       let dx = b.x - a.x, dy = b.y - a.y;
-      const d = Math.hypot(dx, dy) || 1, min = a.r + b.r + 6;
+      const d = Math.hypot(dx, dy) || 1, min = a.r + b.r + (Math.abs(dx) < a.r + b.r ? 40 : 18); // extra room above/below, where the name sits
       if (d < min) { const push = (min - d) / 2; dx /= d; dy /= d; a.x -= dx * push; a.y -= dy * push; b.x += dx * push; b.y += dy * push; }
     }
+    towns.forEach(keepInside);
   }
-  towns.forEach((t) => { t.x = Math.min(W - t.r - 10, Math.max(t.r + 10, t.x)); t.y = Math.min(H - t.r - 10, Math.max(t.r + 10, t.y)); });
   return towns.sort((a, b) => b.list.length - a.list.length || a.name.localeCompare(b.name));
 }
 
@@ -50,7 +51,7 @@ export default function ProvinceMap() {
           return (
             <button key={t.name} type="button" aria-pressed={t.name === name}
               aria-label={`${t.name}: ${t.list.length} ${t.list.length === 1 ? "court" : "courts"}, ${openCount(t)} open now`}
-              className={`bubble ${live ? "live" : ""} ${t.name === name ? "sel" : ""} ${t.list.length >= 3 ? "big" : ""}`}
+              className={`bubble ${live ? "live" : ""} ${t.name === name ? "sel" : ""} ${t.list.length >= 5 ? "big" : ""}`}
               style={{ left: `${(t.x / W) * 100}%`, top: `${(t.y / H) * 100}%`, width: `${((t.r * 2) / W) * 100}%`, "--d": `${(i % 7) * 0.7}s` }}
               onClick={() => setName(t.name)} onMouseEnter={() => setName(t.name)} onFocus={() => setName(t.name)}>
               <b>{t.list.length}</b><span className="bname">{t.name}</span>
@@ -66,7 +67,7 @@ export default function ProvinceMap() {
         <p className="pm-stats"><span><b>{sel.list.length}</b> {sel.list.length === 1 ? "court" : "courts"}</span><span><b>{openCount(sel)}</b> open now</span></p>
         <ul className="pm-list">
           {sel.list.slice(0, 4).map((c) => (
-            <li key={c.id}><Link to={`/courts/${c.id}`}><span>{c.name}</span><OpenBadge court={c} /><ArrowUpRight size={16} aria-hidden="true" /></Link></li>
+            <li key={c.id}><Link to={`/courts/${c.id}`}><span className="pm-name">{c.name}</span><OpenBadge court={c} /><ArrowUpRight size={16} aria-hidden="true" /></Link></li>
           ))}
         </ul>
         {sel.list.length > 4 && <p className="muted">+ {sel.list.length - 4} more</p>}

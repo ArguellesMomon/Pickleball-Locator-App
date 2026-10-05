@@ -5,7 +5,8 @@ import { showToast } from "./components/Toaster.jsx";
 // Saved courts live in this browser's localStorage (no login needed).
 const KEY = "pickle-saved";
 const listeners = new Set();
-const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+const valid = new Set(courts.map((c) => c.id));
+const read = () => { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter((id) => valid.has(id)); } catch { return []; } };
 let saved = read();
 
 function write(next) {

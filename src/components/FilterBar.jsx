@@ -26,7 +26,7 @@ export default function FilterBar({ filters, defaultOpen = false, className = ""
       <div className="filter-top">
         <label className="field">
           <Search size={18} aria-hidden="true" />
-          <input type="search" placeholder="Search by court name" value={f.search} onChange={(e) => set("search", e.target.value)} />
+          <input type="search" placeholder="Search courts" value={f.search} onChange={(e) => set("search", e.target.value)} />
           {f.search && <button type="button" className="clear" aria-label="Clear search" onClick={() => set("search", "")}><X size={16} /></button>}
         </label>
         <button type="button" className="btn ghost dark toggle" aria-expanded={open} aria-controls="filter-panel" onClick={() => setOpen(!open)}>

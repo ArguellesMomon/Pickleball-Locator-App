@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Share2, Copy, Check, CalendarPlus, Navigation, Info } from "lucide-react";
 import courts from "../data/courts.json";
 import PageHead from "../components/PageHead.jsx";
+import BackButton from "../components/BackButton.jsx";
 import { manilaMinutes, isOpenAtMinutes, formatHours, to12h, downloadIcs } from "../utils.js";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -38,7 +39,7 @@ export default function Plan() {
 
   return (
     <>
-      <PageHead eyebrow="Plan a game" title="Get your group on court">
+      <PageHead back={<BackButton fallback="/explore" label="Explore" />} eyebrow="Plan a game" title="Get your group on court">
         <p className="muted lede-light">Pick a court and a time. We'll make an invite you can send to your group chat, and a calendar reminder.</p>
       </PageHead>
       <div className="page pull">

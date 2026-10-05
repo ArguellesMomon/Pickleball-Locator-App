@@ -7,6 +7,7 @@ export default function BackButton({ fallback = "/courts", label = "All courts" 
   const navigate = useNavigate();
   const { key } = useLocation();
   const hasHistory = key !== "default"; // "default" = the first page of this visit
+  if (!hasHistory && !fallback) return null; // tab pages show Back only when there is somewhere to go back to
   return (
     <button type="button" className="back" onClick={() => (hasHistory ? navigate(-1) : navigate(fallback))}>
       <ArrowLeft size={16} aria-hidden="true" />{hasHistory ? "Back" : label}
