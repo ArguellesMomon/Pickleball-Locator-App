@@ -10,6 +10,7 @@ import MapLegend from "../components/MapLegend.jsx";
 import Img from "../components/Img.jsx";
 import useSaved from "../useSaved.js";
 import { formatHours, shareCourt } from "../utils.js";
+import { stopTracking } from "../useGeo.js";
 
 const clamp = (n, lo, hi) => Math.min(Math.max(n, lo), hi);
 
@@ -25,7 +26,8 @@ function ShareChip({ court }) {
 
 // Full-screen map, floating search, draggable bottom sheet (like Google Maps on a phone)
 export default function MobileMap({ filters }) {
-  const { results, selectedId, select, me, findNearMe } = filters;
+  const { results, selectedId, select, me, trackMe } = filters;
+  const flown = useRef(false); // fly to you once per tap, then just move the blue dot
   const root = useRef(null), sheetRef = useRef(null), drag = useRef(null);
   const [H, setH] = useState(640);
   const [bar, setBar] = useState(80);         // where the floating search bar ends (px from the top of the map)
@@ -54,7 +56,8 @@ export default function MobileMap({ filters }) {
     window.addEventListener("resize", measure);
     return () => { clearTimeout(later); window.removeEventListener("resize", measure); };
   }, []);
-  useEffect(() => { if (me) setFocus({ lat: me.lat, lng: me.lng, zoom: 13 }); }, [me]);
+  useEffect(() => { if (me && !flown.current) { flown.current = true; setFocus({ lat: me.lat, lng: me.lng, zoom: 14 }); } }, [me]);
+  useEffect(() => () => stopTracking(), []); // stop using the GPS when leaving the map
 
   function choose(court) {
     select(court.id);
@@ -86,7 +89,7 @@ export default function MobileMap({ filters }) {
       <div className="map-top"><FilterBar filters={filters} className="floating" /></div>
       <MapLegend />
       <button type="button" className="fab fit" aria-label="Fit all courts on screen" onClick={() => setFitTick((t) => t + 1)}><Maximize2 size={20} aria-hidden="true" /></button>
-      <button type="button" className="fab" aria-label="Show courts near me" onClick={findNearMe}><Locate size={22} aria-hidden="true" /></button>
+      <button type="button" className="fab" aria-label="Show my location" onClick={() => { flown.current = false; trackMe(); }}><Locate size={22} aria-hidden="true" /></button>
 
       <section ref={sheetRef} className={`sheet ${dragVis !== null ? "dragging" : ""}`} aria-label={selected ? selected.name : "Courts"}>
         <div className="sheet-handle" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} role="button" aria-label="Resize court list"><span className="grabber" /></div>

@@ -11,6 +11,7 @@ import ProvinceMap from "../components/ProvinceMap.jsx";
 import useCountUp from "../useCountUp.js";
 import useSaved from "../useSaved.js";
 import { isOpenNow, distanceKm } from "../utils.js";
+import useGeo, { locate, openGeoHelp } from "../useGeo.js";
 import { AMENITY_ICONS } from "../icons.jsx";
 import { CONTACT_EMAIL } from "../config.js";
 
@@ -26,21 +27,15 @@ function greeting() {
 // Tabbed horizontal list: what's open, what's closest, what you saved
 function Discover({ openNow }) {
   const { ids } = useSaved();
+  const { pos, status, source, label } = useGeo();
   const [tab, setTab] = useState("open");
-  const [pos, setPos] = useState(null);
-  const [geo, setGeo] = useState("idle"); // idle | asking | ok | denied
   const saved = courts.filter((c) => ids.includes(c.id));
   const nearest = useMemo(() => (pos ? courts.map((c) => ({ court: c, distance: distanceKm(pos.lat, pos.lng, c.lat, c.lng) })).sort((a, b) => a.distance - b.distance).slice(0, 10) : []), [pos]);
 
-  function askLocation() {
-    if (!navigator.geolocation) { setGeo("denied"); return; }
-    setGeo("asking");
-    navigator.geolocation.getCurrentPosition((p) => { setPos({ lat: p.coords.latitude, lng: p.coords.longitude }); setGeo("ok"); }, () => setGeo("denied"));
-  }
-  function pick(next) { setTab(next); if (next === "near" && !pos && geo !== "asking") askLocation(); }
+  function pick(next) { setTab(next); if (next === "near" && !pos) locate(); } // called from a tap, so phones show the permission prompt
 
   const tabs = [["open", `Open now (${openNow.length})`], ["near", "Near me"], ...(saved.length ? [["saved", `Saved (${saved.length})`]] : [])];
-  const seeAll = { open: "/courts?open=1", near: "/courts?near=1", saved: "/saved" }[tab];
+  const seeAll = { open: "/courts?open=1", near: "/courts?sort=near", saved: "/saved" }[tab];
 
   return (
     <section className="section reveal">
@@ -53,9 +48,15 @@ function Discover({ openNow }) {
       </div>
       {tab === "open" && (openNow.length ? <Rail key="open" label="Courts open now">{openNow.slice(0, 12).map((c) => <CourtCard key={c.id} court={c} />)}</Rail>
         : <p className="muted">No court with listed hours is open right now. Check back soon.</p>)}
-      {tab === "near" && (geo === "ok" ? <Rail key="near" label="Nearest courts">{nearest.map(({ court, distance }) => <CourtCard key={court.id} court={court} distance={distance} />)}</Rail>
-        : geo === "denied" ? <div className="hint"><p>We couldn't get your location. Allow location access and try again.</p><button type="button" className="btn" onClick={askLocation}><Locate size={18} aria-hidden="true" />Try again</button></div>
-        : <p className="muted">Finding courts near you…</p>)}
+      {tab === "near" && (pos ? <>
+          <p className="muted loc-note"><Locate size={14} aria-hidden="true" /> {source === "gps" ? "Based on your current location" : `Based on ${label}`}</p>
+          <Rail key="near" label="Nearest courts">{nearest.map(({ court, distance }) => <CourtCard key={court.id} court={court} distance={distance} />)}</Rail>
+        </>
+        : status === "asking" ? <p className="muted">Finding courts near you…</p>
+        : <div className="hint">
+            <p>Share your location to see the closest courts, or pick your town instead.</p>
+            <div className="row tight"><button type="button" className="btn" onClick={() => locate()}><Locate size={18} aria-hidden="true" />Use my location</button><button type="button" className="btn ghost dark" onClick={openGeoHelp}>Pick my town</button></div>
+          </div>)}
       {tab === "saved" && <Rail key="saved" label="Saved courts">{saved.map((c) => <CourtCard key={c.id} court={c} />)}</Rail>}
     </section>
   );
@@ -96,7 +97,7 @@ export default function Home() {
             </div>
             <WeatherChip />
             <div className="row">
-              <Link className="btn ghost" to="/courts?near=1"><Locate size={18} aria-hidden="true" />Courts near me</Link>
+              <button type="button" className="btn ghost" onClick={() => { locate(); navigate("/courts?sort=near"); }}><Locate size={18} aria-hidden="true" />Courts near me</button>
               <Link className="btn ghost" to="/map"><MapIcon size={18} aria-hidden="true" />Open the map</Link>
             </div>
             <dl className="stats">

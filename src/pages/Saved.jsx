@@ -44,58 +44,61 @@ export default function Saved() {
         {list.length > 0 && (
           <div className="pagehead-row">
             <p className="muted"><b>{list.length}</b> saved · <b>{openCount}</b> open now</p>
-            <div className="row tight">
+            <div className="head-actions">
               <Link className="btn" to={`/plan?c=${list[0].id}`}><CalendarDays size={18} aria-hidden="true" />Plan a game</Link>
-              <button type="button" className="btn ghost" onClick={share}>{copied ? <Check size={18} aria-hidden="true" /> : <Share2 size={18} aria-hidden="true" />}{copied ? "Link copied" : "Share list"}</button>
-              <button type="button" className="btn ghost" onClick={wipe}><Trash2 size={18} aria-hidden="true" />{sure ? "Tap again to confirm" : "Clear all"}</button>
+              <button type="button" className="btn ghost icon" aria-label="Share list" onClick={share}>{copied ? <Check size={18} aria-hidden="true" /> : <Share2 size={18} aria-hidden="true" />}<span className={`lbl ${copied ? "show" : ""}`}>{copied ? "Link copied" : "Share list"}</span></button>
+              <button type="button" className="btn ghost icon" aria-label="Clear all saved courts" onClick={wipe}><Trash2 size={18} aria-hidden="true" /><span className={`lbl ${sure ? "show" : ""}`}>{sure ? "Tap again to confirm" : "Clear all"}</span></button>
             </div>
           </div>
         )}
       </PageHead>
+
       <div className="page pull">
         {shared.length > 0 && (
-          <section className="shared panel">
-            <div className="shared-top">
-              <span className="shared-icon"><Users size={22} aria-hidden="true" /></span>
-              <div>
-                <h2>Someone shared {shared.length} {shared.length === 1 ? "court" : "courts"} with you</h2>
-                <p className="muted">{fresh.length ? `${fresh.length} new to your list.` : "You already have all of these saved."}</p>
+          <section className="block">
+            <div className="shared panel">
+              <div className="shared-top">
+                <span className="shared-icon"><Users size={22} aria-hidden="true" /></span>
+                <div>
+                  <h2>Someone shared {shared.length} {shared.length === 1 ? "court" : "courts"} with you</h2>
+                  <p className="muted">{fresh.length ? `${fresh.length} new to your list.` : "You already have all of these saved."}</p>
+                </div>
+                <button type="button" className="btn primary" disabled={!fresh.length} onClick={() => addMany(fresh.map((c) => c.id))}>
+                  <Plus size={18} aria-hidden="true" />{fresh.length ? `Add ${fresh.length} to my list` : "Already saved"}
+                </button>
               </div>
-              <button type="button" className="btn primary" disabled={!fresh.length} onClick={() => addMany(fresh.map((c) => c.id))}>
-                <Plus size={18} aria-hidden="true" />{fresh.length ? `Add ${fresh.length} to my list` : "Already saved"}
-              </button>
+              <div className={`grid ${view === "list" ? "list" : ""}`}>{shared.map((c) => <CourtCard key={c.id} court={c} />)}</div>
             </div>
-            <div className={`grid ${view === "list" ? "list" : ""}`}>{shared.map((c) => <CourtCard key={c.id} court={c} />)}</div>
           </section>
         )}
 
         {list.length === 0 ? (
           <>
-            <div className="empty">
-              <span className="empty-icon"><Heart size={28} aria-hidden="true" /></span>
-              <p>Tap the heart on any court to keep it here for quick access.</p>
-              <Link className="btn" to="/courts">Browse courts</Link>
-            </div>
+            <section className="block">
+              <div className="empty">
+                <span className="empty-icon"><Heart size={28} aria-hidden="true" /></span>
+                <p>Tap the heart on any court to keep it here for quick access.</p>
+                <Link className="btn" to="/courts">Browse courts</Link>
+              </div>
+            </section>
             {suggestions.length > 0 && (
-              <section className="saved-suggest reveal">
+              <section className="block reveal">
                 <div className="section-head"><div><p className="eyebrow">Start here</p><h2>Open right now</h2></div></div>
                 <Rail label="Courts open now">{suggestions.map((c) => <CourtCard key={c.id} court={c} />)}</Rail>
               </section>
             )}
           </>
         ) : (
-          <>
-            <div className="toolbar">
-              <p className="muted">Tap a heart to remove a court.</p>
-              <div className="tools">
-                <div className="seg-toggle" role="group" aria-label="Layout">
-                  <button type="button" aria-pressed={view === "grid"} aria-label="Grid view" onClick={() => setView("grid")}><LayoutGrid size={18} /></button>
-                  <button type="button" aria-pressed={view === "list"} aria-label="List view" onClick={() => setView("list")}><List size={18} /></button>
-                </div>
+          <section className="block">
+            <div className="section-head">
+              <div><p className="eyebrow">Your courts</p><h2>{list.length} {list.length === 1 ? "court" : "courts"}</h2></div>
+              <div className="seg-toggle" role="group" aria-label="Layout">
+                <button type="button" aria-pressed={view === "grid"} aria-label="Grid view" onClick={() => setView("grid")}><LayoutGrid size={18} /></button>
+                <button type="button" aria-pressed={view === "list"} aria-label="List view" onClick={() => setView("list")}><List size={18} /></button>
               </div>
             </div>
             <div className={`grid ${view === "list" ? "list" : ""}`}>{list.map((c) => <CourtCard key={c.id} court={c} />)}</div>
-          </>
+          </section>
         )}
       </div>
     </>

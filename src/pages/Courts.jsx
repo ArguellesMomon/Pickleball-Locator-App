@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Map as MapIcon, LayoutGrid, List, SearchX } from "lucide-react";
+import { Map as MapIcon, LayoutGrid, List, SearchX, Locate, X } from "lucide-react";
 import courts from "../data/courts.json";
 import CourtCard from "../components/CourtCard.jsx";
 import FilterBar from "../components/FilterBar.jsx";
@@ -9,6 +9,7 @@ import BackButton from "../components/BackButton.jsx";
 import SortSelect from "../components/SortSelect.jsx";
 import useCourtFilters from "../useCourtFilters.js";
 import useMedia from "../useMedia.js";
+import { clearGeo } from "../useGeo.js";
 
 export default function Courts() {
   const filters = useCourtFilters();
@@ -31,35 +32,49 @@ export default function Courts() {
           <Link className="btn" to={`/map${search}`}><MapIcon size={18} aria-hidden="true" />View on map</Link>
         </div>
       </PageHead>
-      <div className="page pull">
-        <FilterBar filters={filters} defaultOpen={roomy} />
-        <div className="townbar" role="group" aria-label="Quick town filter">
-          <button type="button" className="chip" aria-pressed={town === "All"} onClick={() => filters.set("town", "All")}>All <b>{courts.length}</b></button>
-          {towns.map(([t, n]) => (
-            <button key={t} type="button" className="chip" aria-pressed={town === t} onClick={() => filters.set("town", town === t ? "All" : t)}>{t} <b>{n}</b></button>
-          ))}
-        </div>
 
-        <div className="toolbar">
-          <p className="muted"><b>{count}</b> {count === 1 ? "court" : "courts"}{filtered && <> · <button type="button" className="linkbtn" onClick={() => { filters.clearAll(); }}>Clear filters</button></>}</p>
-          <div className="tools">
-            <SortSelect filters={filters} />
-            <div className="seg-toggle" role="group" aria-label="Layout">
-              <button type="button" aria-pressed={filters.view === "grid"} aria-label="Grid view" onClick={() => filters.setView("grid")}><LayoutGrid size={18} /></button>
-              <button type="button" aria-pressed={filters.view === "list"} aria-label="List view" onClick={() => filters.setView("list")}><List size={18} /></button>
+      <div className="page pull">
+        <section className="block">
+          <div className="section-head"><div><p className="eyebrow">Find</p><h2>Search and filter</h2></div></div>
+          <FilterBar filters={filters} defaultOpen={roomy} />
+          <div className="townbar" role="group" aria-label="Quick town filter">
+            <button type="button" className="chip" aria-pressed={town === "All"} onClick={() => filters.set("town", "All")}>All <b>{courts.length}</b></button>
+            {towns.map(([t, n]) => (
+              <button key={t} type="button" className="chip" aria-pressed={town === t} onClick={() => filters.set("town", town === t ? "All" : t)}>{t} <b>{n}</b></button>
+            ))}
+          </div>
+        </section>
+
+        <section className="block">
+          <div className="section-head">
+            <div>
+              <p className="eyebrow">Results</p>
+              <h2>{count} {count === 1 ? "court" : "courts"}</h2>
+              {(filtered || filters.me) && (
+                <p className="result-meta">
+                  {filters.me && <span className="loc-chip"><Locate size={14} aria-hidden="true" />{filters.geoSource === "gps" ? "Using your location" : `Near ${filters.geoLabel}`}<button type="button" aria-label="Stop using my location" onClick={clearGeo}><X size={12} /></button></span>}
+                  {filtered && <button type="button" className="linkbtn" onClick={filters.clearAll}>Clear filters</button>}
+                </p>
+              )}
+            </div>
+            <div className="tools">
+              <SortSelect filters={filters} />
+              <div className="seg-toggle" role="group" aria-label="Layout">
+                <button type="button" aria-pressed={filters.view === "grid"} aria-label="Grid view" onClick={() => filters.setView("grid")}><LayoutGrid size={18} /></button>
+                <button type="button" aria-pressed={filters.view === "list"} aria-label="List view" onClick={() => filters.setView("list")}><List size={18} /></button>
+              </div>
             </div>
           </div>
-        </div>
-
-        {count === 0 ? (
-          <div className="empty">
-            <span className="empty-icon"><SearchX size={28} aria-hidden="true" /></span>
-            <p>No courts match those filters.</p>
-            <button type="button" className="btn" onClick={filters.clearAll}>Clear all filters</button>
-          </div>
-        ) : (
-          <div className={`grid ${filters.view === "list" ? "list" : ""}`}>{filters.results.map(({ court, distance }) => <CourtCard key={court.id} court={court} distance={distance} />)}</div>
-        )}
+          {count === 0 ? (
+            <div className="empty">
+              <span className="empty-icon"><SearchX size={28} aria-hidden="true" /></span>
+              <p>No courts match those filters.</p>
+              <button type="button" className="btn" onClick={filters.clearAll}>Clear all filters</button>
+            </div>
+          ) : (
+            <div className={`grid ${filters.view === "list" ? "list" : ""}`}>{filters.results.map(({ court, distance }) => <CourtCard key={court.id} court={court} distance={distance} />)}</div>
+          )}
+        </section>
       </div>
     </>
   );

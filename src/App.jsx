@@ -8,6 +8,7 @@ import Saved from "./pages/Saved.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import QuickSearch from "./components/QuickSearch.jsx";
+import GeoDialog from "./components/GeoDialog.jsx";
 import Toaster from "./components/Toaster.jsx";
 import ScrollTop from "./components/ScrollTop.jsx";
 import useSaved from "./useSaved.js";
@@ -130,6 +131,7 @@ export default function App() {
         )}
       </main>
       {searching && <QuickSearch onClose={() => setSearching(false)} />}
+      <GeoDialog />
       <Toaster />
       <ScrollTop />
     </>

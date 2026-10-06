@@ -12,6 +12,7 @@ import Ambient from "../components/Ambient.jsx";
 import Rail from "../components/Rail.jsx";
 import WeatherCard from "../components/WeatherCard.jsx";
 import { recordView } from "../useRecent.js";
+import useGeo from "../useGeo.js";
 import { normalIcon } from "../mapIcons.js";
 import { AMENITY_ICONS, FacebookIcon } from "../icons.jsx";
 import { formatHours, openStatus, distanceKm, shareCourt, courtPhotos, describeCourt } from "../utils.js";
@@ -40,6 +41,7 @@ function StatusCard({ court }) {
 export default function CourtDetail() {
   const { id } = useParams();
   const [shared, setShared] = useState(false);
+  const { pos } = useGeo();
   const [addrCopied, setAddrCopied] = useState(false);
   const court = courts.find((c) => c.id === id);
   useEffect(() => { recordView(id); }, [id]); // feeds "Recently viewed" and quick search
@@ -51,7 +53,7 @@ export default function CourtDetail() {
   const googleMaps = `https://www.google.com/maps/dir/?api=1&destination=${court.lat},${court.lng}`;
   const waze = `https://waze.com/ul?ll=${court.lat},${court.lng}&navigate=yes`;
   const { photos, sample } = courtPhotos(court);
-  const facts = [[Clock3, formatHours(court)], [Layers, court.courtCount && `${court.courtCount} courts`], [Building2, court.type], [Banknote, court.rates]].filter((f) => f[1]);
+  const facts = [[Navigation, pos && `${distanceKm(pos.lat, pos.lng, court.lat, court.lng).toFixed(1)} km from you`], [Clock3, formatHours(court)], [Layers, court.courtCount && `${court.courtCount} courts`], [Building2, court.type], [Banknote, court.rates]].filter((f) => f[1]);
   const nearby = courts.filter((c) => c.id !== court.id)
     .map((c) => ({ court: c, distance: distanceKm(court.lat, court.lng, c.lat, c.lng) }))
     .sort((a, b) => a.distance - b.distance).slice(0, 4);

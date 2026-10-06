@@ -44,6 +44,8 @@ export default function Plan() {
       </PageHead>
       <div className="page pull">
         <div className="plan-page">
+          <div>
+          <div className="section-head"><div><p className="eyebrow">Step 1</p><h2>Game details</h2></div></div>
           <form className="panel suggest" onSubmit={(e) => e.preventDefault()}>
             <label>Court
               <select value={court.id} onChange={(e) => setParams({ c: e.target.value }, { replace: true })}>
@@ -63,8 +65,10 @@ export default function Plan() {
             {fits === null && <p className="note"><Info size={18} aria-hidden="true" />Hours aren't listed for this court. Call ahead to confirm before you invite people.</p>}
             {fits === true && <p className="note ok"><Check size={18} aria-hidden="true" />Within opening hours ({formatHours(court)}).</p>}
           </form>
+          </div>
 
           <aside className="invite-wrap">
+            <div className="section-head"><div><p className="eyebrow">Step 2</p><h2>Send the invite</h2></div></div>
             <div className="invite" aria-label="Invite preview">
               <p className="eyebrow light">Invite preview</p>
               <pre>{message}</pre>

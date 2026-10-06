@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { stopTracking } from "../useGeo.js";
 import { Locate, Maximize2 } from "lucide-react";
 import CourtMap from "../components/CourtMap.jsx";
 import CourtCard from "../components/CourtCard.jsx";
@@ -20,7 +21,9 @@ function DesktopMap({ filters }) {
   const [hoveredId, setHoveredId] = useState(null); // hovering a card highlights its pin
   const [fitTick, setFitTick] = useState(0);
   const [focus, setFocus] = useState(null);
-  useEffect(() => { if (filters.me) setFocus({ lat: filters.me.lat, lng: filters.me.lng, zoom: 13 }); }, [filters.me]);
+  const flown = useRef(false); // fly to you once per tap, then just move the blue dot
+  useEffect(() => { if (filters.me && !flown.current) { flown.current = true; setFocus({ lat: filters.me.lat, lng: filters.me.lng, zoom: 14 }); } }, [filters.me]);
+  useEffect(() => () => stopTracking(), []); // stop using the GPS when leaving the map
   const n = filters.results.length;
   return (
     <div className="split">
@@ -36,7 +39,7 @@ function DesktopMap({ filters }) {
       <div className="mapwrap">
         <CourtMap results={filters.results} activeId={hoveredId} popups me={filters.me} fitTick={fitTick} focus={focus} />
         <div className="map-ctrls">
-          <button type="button" aria-label="Show courts near me" title="Near me" onClick={filters.findNearMe}><Locate size={20} /></button>
+          <button type="button" aria-label="Show courts near me" title="Near me" onClick={() => { flown.current = false; filters.trackMe(); }}><Locate size={20} /></button>
           <button type="button" aria-label="Fit all courts on screen" title="Fit all courts" onClick={() => setFitTick((t) => t + 1)}><Maximize2 size={20} /></button>
         </div>
         <MapLegend />

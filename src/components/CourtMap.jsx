@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Circle, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Link } from "react-router-dom";
 import { Navigation } from "lucide-react";
@@ -72,6 +72,7 @@ export default function CourtMap({ results, activeId, onSelect, popups = false, 
           </Marker>
         ))}
       </MarkerClusterGroup>
+      {me && me.accuracy > 0 && me.accuracy < 3000 && <Circle center={[me.lat, me.lng]} radius={me.accuracy} pathOptions={{ color: "#1f6fb2", weight: 1, fillColor: "#1f6fb2", fillOpacity: 0.12 }} />}
       {me && <CircleMarker center={[me.lat, me.lng]} radius={8} pathOptions={{ color: "#fff", weight: 3, fillColor: "#1f6fb2", fillOpacity: 1 }} />}
     </MapContainer>
   );

@@ -1,6 +1,9 @@
 {
   "functions": { "api/og.js": { "includeFiles": "src/data/courts.json" } },
-  "headers": [{ "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }],
+  "headers": [
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/(.*)", "headers": [{ "key": "Permissions-Policy", "value": "geolocation=(self)" }] }
+  ],
   "rewrites": [
     { "source": "/courts/:id", "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|facebot|messenger|twitterbot|slackbot|whatsapp|telegrambot|linkedinbot|viber).*" }], "destination": "/api/og?id=:id" },
     { "source": "/", "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|facebot|messenger|twitterbot|slackbot|whatsapp|telegrambot|linkedinbot|viber).*" }], "destination": "/api/og" },

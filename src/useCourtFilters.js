@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import courts from "./data/courts.json";
 import { distanceKm, isOpenNow, isOpenAt } from "./utils.js";
+import useGeo, { locate } from "./useGeo.js";
 
 // Filters (and the selected map pin) live in the URL, e.g. /courts?town=Lipa%20City&open=1
 // That way Back, refresh and shared links all restore exactly what you were looking at.
@@ -11,8 +12,8 @@ const rank = (c) => { const o = isOpenNow(c); return o ? 2 : o === null ? 1 : 0;
 
 export default function useCourtFilters() {
   const [params, setParams] = useSearchParams();
-  const [me, setMe] = useState(null); // your position after tapping "Near me"
-  const [geoError, setGeoError] = useState("");
+  const geo = useGeo();
+  const me = geo.pos; // your position (GPS, or the town you picked)
 
   const f = {
     search: params.get("q") || "",
@@ -55,17 +56,11 @@ export default function useCourtFilters() {
         : a.court.name.localeCompare(b.court.name)));
   }, [params.toString(), me]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function findNearMe() {
-    setGeoError("");
-    update({ near: true });
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setGeoError("We couldn't get your location. Allow location access and try again.")
-    );
-  }
+  const findNearMe = () => { update({ near: true }); locate(); };
+  const trackMe = () => { update({ near: true }); locate({ track: true }); }; // map: keep following you
   const setSort = (value) => { update({ sort: value }); if (value === "near" && !me) findNearMe(); };
   const setView = (value) => update({ view: value === "grid" ? null : value });
-  useEffect(() => { if (params.get("near") === "1") findNearMe(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (params.get("near") === "1" && !me) locate(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { f, set, toggleAmenity, clearAll, results, findNearMe, geoError, me, activeCount, selectedId: params.get("c"), select, sort, setSort, view, setView, update };
+  return { f, set, toggleAmenity, clearAll, results, findNearMe, trackMe, geoError: "", me, geoSource: geo.source, geoLabel: geo.label, activeCount, selectedId: params.get("c"), select, sort, setSort, view, setView, update };
 }
