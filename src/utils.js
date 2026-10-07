@@ -1,3 +1,4 @@
+import { showToast } from "./components/Toaster.jsx";
 export const AMENITIES = ["Lights", "Parking", "Restrooms", "Paddle rental", "Covered"];
 
 // Straight-line distance in km between two lat/lng points (haversine formula)
@@ -40,13 +41,11 @@ export function formatHours(court) {
 
 // Phones open the share sheet (Messenger, Viber...); desktops copy the link instead
 export async function shareCourt(court) {
-  const url = `${window.location.origin}/courts/${court.id}`;
+  const url = window.location.origin + "/courts/" + court.id;
   if (navigator.share) {
-    try { await navigator.share({ title: court.name, text: `Play pickleball at ${court.name}`, url }); } catch { /* cancelled */ }
-    return "shared";
+    try { await navigator.share({ title: court.name, text: "Play pickleball at " + court.name, url }); return "shared"; } catch (e) { if(e.name === "AbortError") return "cancelled"; }
   }
-  await navigator.clipboard.writeText(url);
-  return "copied";
+  return await copyText(url) ? "copied" : "failed";
 }
 
 // Live status for a court: open/closed, a friendly sentence, and the opening window as 0..1 positions on a 24h bar
@@ -65,7 +64,7 @@ export function openStatus(court) {
 }
 
 // Real photos when the court has them; otherwise sample artwork so the gallery still works
-const SAMPLE = [["/images/placeholder.svg", "the court from above"], ["/images/placeholder-net.svg", "the net"], ["/images/placeholder-paddles.svg", "paddles and ball"], ["/images/placeholder-night.svg", "the courts at night"]];
+const SAMPLE = [["/images/court-illustration-0.svg", "green court"], ["/images/court-illustration-1.svg", "clay-colored court"], ["/images/court-illustration-2.svg", "blue court"], ["/images/court-illustration-3.svg", "olive court"]];
 export function courtPhotos(court) {
   const real = (court.photos || []).filter((p) => !p.includes("placeholder"));
   if (real.length) return { sample: false, photos: real.map((src, i) => ({ src, alt: `${court.name}, photo ${i + 1}` })) };
@@ -92,4 +91,31 @@ export function downloadIcs({ title, date, time, minutes, location, description 
   const a = document.createElement("a");
   a.href = url; a.download = "pickleball-game.ics"; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function matchesCourt(court, query) {
+  const normalize=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const haystack=normalize([court.name,court.municipality,court.address,...(court.amenities||[])].join(" "));
+  return normalize(query).trim().split(/\s+/).every(word=>haystack.includes(word));
+}
+// Check the entire game window, including an overnight closing break.
+export function isOpenDuring(court, start, duration) {
+  if(!court.open||!court.close) return null;
+  if(!Number.isFinite(start)||!Number.isFinite(duration)||duration<=0) return false;
+  for(let m=start;m<start+duration;m++) if(!isOpenAtMinutes(court,((m%1440)+1440)%1440)) return false;
+  return true;
+}
+export async function copyText(text) {
+  try {
+    if(navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); return true; }
+  } catch {}
+  const previous=document.activeElement;
+  const input=document.createElement("textarea");
+  input.value=text;input.setAttribute("readonly","");input.style.cssText="position:fixed;opacity:0;pointer-events:none;";
+  document.body.appendChild(input);input.select();
+  let copied=false;
+  try { copied=document.execCommand("copy"); } catch {}
+  input.remove();previous?.focus?.();
+  if(!copied) showToast("Couldn’t copy. Please select and copy the text manually.");
+  return copied;
 }

@@ -12,7 +12,7 @@ function set(patch) {
   listeners.forEach((fn) => fn());
 }
 const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
-export default function useGeo() { return useSyncExternalStore(subscribe, () => state); }
+export default function useGeo() { return useSyncExternalStore(subscribe, () => state, () => state); }
 
 const avg = (list, key) => list.reduce((s, c) => s + c[key], 0) / list.length;
 export function townCenters() {

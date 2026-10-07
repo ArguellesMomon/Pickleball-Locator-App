@@ -32,6 +32,7 @@ function DesktopMap({ filters }) {
         <FilterBar filters={filters} />
         <div className="side-sort"><SortSelect filters={filters} /></div>
         <p className="muted count-line">{n} {n === 1 ? "court" : "courts"} on the map</p>
+        {!n && <div className="empty"><p>No courts match these filters.</p><button className="btn primary" onClick={filters.clearAll}>Clear filters</button></div>}
         <div className="grid">
           {filters.results.map(({ court, distance }) => <CourtCard key={court.id} court={court} distance={distance} onHover={setHoveredId} />)}
         </div>

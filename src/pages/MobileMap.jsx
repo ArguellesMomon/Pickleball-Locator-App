@@ -9,7 +9,7 @@ import OpenBadge from "../components/OpenBadge.jsx";
 import MapLegend from "../components/MapLegend.jsx";
 import Img from "../components/Img.jsx";
 import useSaved from "../useSaved.js";
-import { formatHours, shareCourt } from "../utils.js";
+import { formatHours, shareCourt, courtPhotos } from "../utils.js";
 import { stopTracking } from "../useGeo.js";
 
 const clamp = (n, lo, hi) => Math.min(Math.max(n, lo), hi);
@@ -36,10 +36,11 @@ export default function MobileMap({ filters }) {
   const [dragVis, setDragVis] = useState(null);
   const [focus, setFocus] = useState(null);
   const [fitTick, setFitTick] = useState(0);
-  const selected = courts.find((c) => c.id === selectedId);
+  const selected = results.find(r => r.court.id === selectedId)?.court;
+  useEffect(() => { if (selectedId && !selected) select(null); }, [selectedId, selected]);
 
   // "full" stops 10px under the search bar, so the bar and the sheet's handle never overlap
-  const full = Math.max(H - sheetBottom - bar - 10, 240);
+  const full = Math.max(H - sheetBottom - bar - 10, 140);
   const SNAP = { peek: 112, half: Math.min(Math.round(H * 0.52), full), full }; // visible sheet height in px
   const vis = dragVis ?? SNAP[snap];
 
@@ -47,14 +48,18 @@ export default function MobileMap({ filters }) {
     const measure = () => {
       const el = root.current; if (!el) return;
       setH(el.clientHeight || 640);
-      const top = el.querySelector(".map-top .filter-top");
+      const top = el.querySelector(".map-top");
       if (top) setBar(top.getBoundingClientRect().bottom - el.getBoundingClientRect().top + 8); // +8 = the bar's own padding
       if (sheetRef.current) setSheetBottom(parseFloat(getComputedStyle(sheetRef.current).bottom) || 0);
     };
     measure();
     const later = setTimeout(measure, 400); // again once fonts have loaded
+    const observer = new ResizeObserver(measure);
+    if (root.current) observer.observe(root.current);
+    const top = root.current?.querySelector(".map-top");
+    if (top) observer.observe(top);
     window.addEventListener("resize", measure);
-    return () => { clearTimeout(later); window.removeEventListener("resize", measure); };
+    return () => { observer.disconnect(); clearTimeout(later); window.removeEventListener("resize", measure); };
   }, []);
   useEffect(() => { if (me && !flown.current) { flown.current = true; setFocus({ lat: me.lat, lng: me.lng, zoom: 14 }); } }, [me]);
   useEffect(() => () => stopTracking(), []); // stop using the GPS when leaving the map
@@ -92,7 +97,7 @@ export default function MobileMap({ filters }) {
       <button type="button" className="fab" aria-label="Show my location" onClick={() => { flown.current = false; trackMe(); }}><Locate size={22} aria-hidden="true" /></button>
 
       <section ref={sheetRef} className={`sheet ${dragVis !== null ? "dragging" : ""}`} aria-label={selected ? selected.name : "Courts"}>
-        <div className="sheet-handle" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} role="button" aria-label="Resize court list"><span className="grabber" /></div>
+        <button type="button" className="sheet-handle" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label="Resize court list" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSnap(s => s === "peek" ? "half" : s === "half" ? "full" : "peek"); } }}><span className="grabber" /></button>
         <div className="sheet-body">
           {selected ? (
             <>
@@ -110,12 +115,13 @@ export default function MobileMap({ filters }) {
                 <SaveChip court={selected} /><ShareChip court={selected} />
               </div>
               <Link className="btn block" to={`/courts/${selected.id}`}>See full details<ArrowUpRight size={18} aria-hidden="true" /></Link>
-              <div className="strip">{selected.photos.map((src) => <Img key={src} src={src} alt={selected.name} />)}</div>
+              <div className="strip">{courtPhotos(selected).photos.map((photo) => <Img key={photo.src} src={photo.src} alt={photo.alt} />)}</div>
             </>
           ) : (
             <>
               <h2>{n} {n === 1 ? "court" : "courts"}</h2>
-              <p className="muted">Tap a pin, or swipe up for the list</p>
+              <p className="muted">{n ? "Tap a pin, or expand the list" : "No courts match these filters."}</p>
+              {!n && <button className="btn ghost dark" onClick={filters.clearAll}>Clear filters</button>}
               <div className="grid">{results.map(({ court, distance }) => <CourtCard key={court.id} court={court} distance={distance} />)}</div>
             </>
           )}

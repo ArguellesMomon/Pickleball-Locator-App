@@ -1,7 +1,8 @@
 import { useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import courts from "./data/courts.json";
-import { distanceKm, isOpenNow, isOpenAt } from "./utils.js";
+import { distanceKm, isOpenNow, isOpenAt, matchesCourt } from "./utils.js";
+import useNow from "./useNow.js";
 import useGeo, { locate } from "./useGeo.js";
 
 // Filters (and the selected map pin) live in the URL, e.g. /courts?town=Lipa%20City&open=1
@@ -13,6 +14,7 @@ const rank = (c) => { const o = isOpenNow(c); return o ? 2 : o === null ? 1 : 0;
 export default function useCourtFilters() {
   const [params, setParams] = useSearchParams();
   const geo = useGeo();
+  const now = useNow();
   const me = geo.pos; // your position (GPS, or the town you picked)
 
   const f = {
@@ -36,7 +38,7 @@ export default function useCourtFilters() {
 
   const set = (key, value) => update({ [PARAM[key]]: value });
   const toggleAmenity = (a) => update({ amen: (f.amenities.includes(a) ? f.amenities.filter((x) => x !== a) : [...f.amenities, a]).join(",") });
-  const clearAll = () => update({ q: null, town: null, type: null, amen: null, open: null, at: null });
+  const clearAll = () => update({ near: null, q: null, town: null, type: null, amen: null, open: null, at: null });
   const select = (id) => update({ c: id });
   const sort = params.get("sort") || (me ? "near" : "name"); // name | open | near
   const view = params.get("view") === "list" ? "list" : "grid";
@@ -49,14 +51,14 @@ export default function useCourtFilters() {
       .filter((c) => f.amenities.every((a) => (c.amenities || []).includes(a))) // must have ALL chosen amenities
       .filter((c) => !f.openOnly || isOpenNow(c))
       .filter((c) => !f.at || isOpenAt(c, f.at) === true)
-      .filter((c) => `${c.name} ${c.municipality}`.toLowerCase().includes(f.search.toLowerCase()))
+      .filter((c) => matchesCourt(c, f.search))
       .map((c) => ({ court: c, distance: me ? distanceKm(me.lat, me.lng, c.lat, c.lng) : null }))
       .sort((a, b) => (sort === "near" && me ? a.distance - b.distance
         : sort === "open" ? rank(b.court) - rank(a.court) || a.court.name.localeCompare(b.court.name)
         : a.court.name.localeCompare(b.court.name)));
-  }, [params.toString(), me]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.toString(), me, now]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const findNearMe = () => { update({ near: true }); locate(); };
+  const findNearMe = () => { update({ near: true, sort: "near" }); locate(); };
   const trackMe = () => { update({ near: true }); locate({ track: true }); }; // map: keep following you
   const setSort = (value) => { update({ sort: value }); if (value === "near" && !me) findNearMe(); };
   const setView = (value) => update({ view: value === "grid" ? null : value });

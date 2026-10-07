@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { House, LayoutGrid, Map as MapIcon } from "lucide-react";
 import PageHead from "../components/PageHead.jsx";
-import CourtArt from "../components/CourtArt.jsx";
+import CourtVisual from "../components/CourtVisual.jsx";
 
 export default function NotFound() {
   return (
@@ -9,7 +9,7 @@ export default function NotFound() {
       <PageHead eyebrow="Error 404" title="Out of bounds!" />
       <div className="page pull">
         <div className="not-found">
-          <CourtArt />
+          <CourtVisual variant={1} />
           <div>
             <h2>That page isn't on the court.</h2>
             <p className="muted">The link may be old or mistyped. Let's get you back in play.</p>

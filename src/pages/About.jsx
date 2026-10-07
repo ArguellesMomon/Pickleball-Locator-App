@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, MapPin, Navigation, Ban, Hand, Repeat, Trophy, Mail, Copy, Check, Send } from "lucide-react";
+import { copyText } from "../utils.js";
 import courts from "../data/courts.json";
 import BackButton from "../components/BackButton.jsx";
 import PageHead from "../components/PageHead.jsx";
@@ -22,7 +23,7 @@ const TIPS = [
 const FAQ = [
   ["How current is the information?", "Hours and contacts come from public pages and can change. Please call or check the court's page before you go, and tell us if something is wrong."],
   ["Is it free to use?", "Yes. Pickle Batangas is free for players. It does not take bookings or payments."],
-  ["How do I list my court?", "Send us the court name, town, hours and a contact. Use the form below and it will be added after a quick check."],
+  ["How do I list my court?", "Prepare the court name, town, hours and a contact using the form below. A listing needs to be reviewed before it is added."],
 ];
 
 function SuggestForm() {
@@ -31,7 +32,7 @@ function SuggestForm() {
   const ready = Boolean(v.name.trim() || v.notes.trim()); // nothing to send yet
   const message = `New court suggestion for Pickle Batangas\n\nCourt name: ${v.name}\nTown: ${v.town}\nDetails (hours, phone, Facebook page): ${v.notes}`;
   const field = (key) => ({ value: v[key], onChange: (e) => setV({ ...v, [key]: e.target.value }) });
-  const copy = async () => { try { await navigator.clipboard.writeText(message); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { /* clipboard blocked */ } };
+  const copy = async () => { try { if (!(await copyText(message))) return; setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { /* clipboard blocked */ } };
   return (
     <div className="suggest">
       <h3>Suggest a court or a correction</h3>

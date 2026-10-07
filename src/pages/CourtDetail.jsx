@@ -8,14 +8,13 @@ import SaveButton from "../components/SaveButton.jsx";
 import BackButton from "../components/BackButton.jsx";
 import CourtCard from "../components/CourtCard.jsx";
 import Gallery from "../components/Gallery.jsx";
-import Ambient from "../components/Ambient.jsx";
 import Rail from "../components/Rail.jsx";
 import WeatherCard from "../components/WeatherCard.jsx";
 import { recordView } from "../useRecent.js";
 import useGeo from "../useGeo.js";
 import { normalIcon } from "../mapIcons.js";
 import { AMENITY_ICONS, FacebookIcon } from "../icons.jsx";
-import { formatHours, openStatus, distanceKm, shareCourt, courtPhotos, describeCourt } from "../utils.js";
+import { formatHours, openStatus, distanceKm, shareCourt, courtPhotos, describeCourt, copyText } from "../utils.js";
 import { CONTACT_EMAIL } from "../config.js";
 
 // Live open/closed card with a 24-hour bar: yellow = open hours, dark marker = right now
@@ -61,7 +60,6 @@ export default function CourtDetail() {
 
   return (
     <div className="detail-wrap">
-      <Ambient />
       <div className="page detail">
         <BackButton />
 
@@ -118,7 +116,7 @@ export default function CourtDetail() {
             <section className="panel reveal">
               <div className="loc-top">
                 <div><h2 className="panel-title">Location</h2><p className="muted">{court.address}</p></div>
-                <button type="button" className="btn ghost dark" onClick={async () => { await navigator.clipboard.writeText(court.address); setAddrCopied(true); }}>
+                <button type="button" className="btn ghost dark" onClick={async () => { if (await copyText(court.address)) { setAddrCopied(true); setTimeout(() => setAddrCopied(false), 2500); } }}>
                   {addrCopied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}{addrCopied ? "Copied" : "Copy address"}
                 </button>
               </div>

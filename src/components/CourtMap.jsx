@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Circle, useMap, u
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Link } from "react-router-dom";
 import { Navigation } from "lucide-react";
+import courts from "../data/courts.json";
 import OpenBadge from "./OpenBadge.jsx";
 import { normalIcon, closedIcon, unknownIcon, activeIcon } from "../mapIcons.js";
 import { isOpenNow } from "../utils.js";
@@ -21,10 +22,10 @@ function MapEffects({ focus, onBackgroundClick }) {
     if (!focus) return;
     const zoom = Math.max(map.getZoom(), focus.zoom ?? 14);
     const target = map.project([focus.lat, focus.lng], zoom).add([0, focus.offsetY || 0]); // shift so the pin clears the bottom sheet
-    map.flyTo(map.unproject(target, zoom), zoom, { duration: 0.6 });
+    map.flyTo(map.unproject(target, zoom), zoom, { duration: 0.6, animate: !window.matchMedia("(prefers-reduced-motion: reduce)").matches });
   }, [focus, map]);
   useMapEvents({
-    moveend: () => sessionStorage.setItem(VIEW_KEY, JSON.stringify({ center: [map.getCenter().lat, map.getCenter().lng], zoom: map.getZoom() })),
+    moveend: () => { try { sessionStorage.setItem(VIEW_KEY, JSON.stringify({ center: [map.getCenter().lat, map.getCenter().lng], zoom: map.getZoom() })); } catch {} },
     click: () => onBackgroundClick?.(),
   });
   return null;
@@ -35,7 +36,7 @@ function FitResults({ results, fitTick, fitPadding }) {
   const map = useMap(), first = useRef(true);
   const key = results.map((r) => r.court.id).join(",");
   useEffect(() => {
-    if (first.current) { first.current = false; return; } // keep the remembered view on arrival
+    if (first.current) { first.current = false; if (results.length === courts.length && !fitTick) return; } // keep the remembered view on arrival
     if (!results.length) return;
     map.fitBounds(L.latLngBounds(results.map((r) => [r.court.lat, r.court.lng])), {
       paddingTopLeft: [40, fitPadding?.top ?? 60], paddingBottomRight: [40, fitPadding?.bottom ?? 60], maxZoom: 15,

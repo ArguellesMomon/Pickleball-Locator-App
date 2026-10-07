@@ -1,133 +1,84 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import { Clock3, MapPin, Locate, Heart, CalendarDays, CloudSun, ArrowRight, Download, Smartphone, Share, Monitor, Building2, Check } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, ArrowUpRight, Search, MapPin, Locate, Clock3, CalendarDays, Heart, Navigation, Plus, Compass } from "lucide-react";
 import courts from "../data/courts.json";
-import Ambient from "../components/Ambient.jsx";
-import ProvinceMap from "../components/ProvinceMap.jsx";
-import OpenBadge from "../components/OpenBadge.jsx";
-import useCountUp from "../useCountUp.js";
-import useInstall from "../useInstall.js";
-import { isOpenNow } from "../utils.js";
-import { CONTACT_EMAIL } from "../config.js";
-
-const FEATURES = [
-  [Clock3, "Live open status", "See what is open right now, with a 24-hour timeline on every court."],
-  [MapPin, "A map that tells the truth", "Yellow pins are open, grey are closed. Filter the list and the map follows."],
-  [Locate, "Near me, one tap", "Sort by distance and get turn-by-turn directions in Google Maps or Waze."],
-  [CalendarDays, "Plan a game", "Pick a court and a time, then send the invite to your group chat."],
-  [CloudSun, "Check the weather", "Temperature and rain chance by the hour, before you head out."],
-  [Heart, "Save and share", "Keep your favorites and send your whole list to a friend."],
-];
-const STEPS = [["1", "Find", "Search a court or town, or tap Near me."], ["2", "Check", "Hours, rates, photos and weather in one place."], ["3", "Play", "Directions, a call, or an invite to your group."]];
-
-// A little phone built from real data, so visitors see the app before they open it
-function PhoneMock({ list }) {
-  return (
-    <div className="phone" aria-hidden="true">
-      <div className="phone-screen">
-        <div className="ph-top"><span className="ph-search">Search a court or town</span></div>
-        <div className="ph-map">{[[22, 30], [58, 22], [70, 58], [34, 64], [48, 44], [80, 34]].map(([x, y], i) => <i key={i} className={i % 3 === 0 ? "live" : ""} style={{ left: `${x}%`, top: `${y}%`, "--d": `${i * 0.35}s` }} />)}</div>
-        <div className="ph-sheet">
-          <b>{courts.length} courts</b>
-          {list.map((c) => <div className="ph-row" key={c.id}><span className="ph-thumb" /><span><strong>{c.name}</strong><small>{c.municipality}</small></span><OpenBadge court={c} /></div>)}
+import CourtCard from "../components/CourtCard.jsx";
+import CourtVisual from "../components/CourtVisual.jsx";
+import useNow from "../useNow.js";
+import useSaved from "../useSaved.js";
+import useGeo, { locate } from "../useGeo.js";
+import { distanceKm, isOpenNow } from "../utils.js";
+import { recentCourts } from "../useRecent.js";
+const QUICK = [["Open now", "open=1", Clock3], ["Evening play", "at=18%3A00", CalendarDays], ["Covered courts", "amen=Covered", MapPin], ["Paddle rental", "amen=Paddle%20rental", Compass]];
+export default function Landing() {
+  useNow();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState("discover");
+  const {
+    ids
+  } = useSaved();
+  const geo = useGeo();
+  const towns = useMemo(() => {
+    const n = {};
+    courts.forEach(c => n[c.municipality] = (n[c.municipality] || 0) + 1);
+    return Object.entries(n).sort((a, b) => b[1] - a[1]);
+  }, []);
+  const open = courts.filter(isOpenNow);
+  const recent = useMemo(recentCourts, []);
+  const featured = useMemo(() => [...courts].sort((a, b) => (b.amenities?.length || 0) + (b.phone ? 1 : 0) - ((a.amenities?.length || 0) + (a.phone ? 1 : 0))).slice(0, 6), []);
+  const list = tab === "open" ? open.slice(0, 6) : tab === "saved" ? courts.filter(c => ids.includes(c.id)).slice(0, 6) : tab === "near" && geo.pos ? courts.map(c => ({
+    ...c,
+    distance: distanceKm(geo.pos.lat, geo.pos.lng, c.lat, c.lng)
+  })).sort((a, b) => a.distance - b.distance).slice(0, 6) : featured;
+  const pickTab = id => {
+    setTab(id);
+    if (id === "near" && !geo.pos) locate();
+  };
+  return <>
+    <section className="discovery-hero">
+      <div className="discovery-hero-in">
+        <div className="hero-copy">
+          <p className="hero-kicker"><span />LOCAL COURTS. GOOD GAMES.</p>
+          <h1>Your next game<br />starts <em>here.</em><svg className="heading-swoosh" viewBox="0 0 180 14" aria-hidden="true"><path d="M3 10Q90 -5 177 7" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" /></svg></h1>
+          <p className="hero-intro">A little less searching. A lot more playing.<br className="desktop-break" /> Discover your kind of pickleball court in Batangas.</p>
+          <form className="discovery-search" onSubmit={e => {
+            e.preventDefault();
+            navigate("/courts" + (query.trim() ? "?q=" + encodeURIComponent(query.trim()) : ""));
+          }}>
+            <Search size={20} /><input aria-label="Search courts or towns" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Court name or town" /><button className="btn primary" type="submit">Find a court<ArrowRight size={17} /></button>
+          </form>
+          <div className="hero-links"><button className="linkbtn" onClick={() => {
+              locate();
+              navigate("/courts?sort=near");
+            }}><Locate size={15} />Use my location</button><span /><Link to="/map"><MapPin size={15} />Explore the map<ArrowUpRight size={14} /></Link></div>
+          <div className="hero-social"><div className="mini-balls" aria-hidden="true"><span>🏓</span><span>↗</span><span>✳</span></div><p><b>More places to play.</b><br />{courts.length} listed venues across {towns.length} towns.</p></div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Install() {
-  const { canInstall, installed, install } = useInstall();
-  return (
-    <section className="section reveal" id="install">
-      <div className="section-head"><div><p className="eyebrow">Take it with you</p><h2>Install it like an app</h2></div></div>
-      <p className="muted">No app store. It opens full screen, loads fast and keeps working when your signal drops.</p>
-      <div className="install">
-        <div className="install-card"><h3><Smartphone size={20} aria-hidden="true" />Android</h3>
-          {installed ? <p><Check size={16} aria-hidden="true" /> You're already using the app.</p>
-            : canInstall ? <button type="button" className="btn primary" onClick={install}><Download size={18} aria-hidden="true" />Install app</button>
-            : <p>Open the browser menu and tap <b>Install app</b> or <b>Add to Home screen</b>.</p>}</div>
-        <div className="install-card"><h3><Share size={20} aria-hidden="true" />iPhone</h3><p>Tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.</p></div>
-        <div className="install-card"><h3><Monitor size={20} aria-hidden="true" />Computer</h3><p>In Chrome or Edge, click the <b>install icon</b> at the end of the address bar.</p></div>
+        <div className="hero-scene">
+          <div className="scene-top"><span><MapPin size={14} />BATANGAS, PHILIPPINES</span><span>14° N · 121° E</span></div>
+          <CourtVisual hero />
+          <div className="scene-stamp">GET OUT.<br />GET PLAYING.<span>✳</span></div>
+          <Link to="/courts?open=1" className="scene-float"><span className="live-dot" /><div><b>{open.length} courts open now</b><small>Your next rally is waiting</small></div><ArrowUpRight size={18} /></Link>
+          <span className="scene-caption">A little court-side inspiration · original illustration</span>
+        </div>
       </div>
     </section>
-  );
-}
-
-export default function Landing() {
-  const towns = useMemo(() => [...new Set(courts.map((c) => c.municipality))], []);
-  const open = useMemo(() => courts.filter((c) => isOpenNow(c)).length, []);
-  const withHours = useMemo(() => courts.filter((c) => c.open).slice(0, 2), []);
-  const nCourts = useCountUp(courts.length), nTowns = useCountUp(towns.length), nOpen = useCountUp(open);
-  const { canInstall, install } = useInstall();
-  const sample = withHours[0] || courts[0];
-
-  return (
-    <>
-      <section className="lp-hero">
-        <Ambient />
-        <div className="lp-hero-in">
-          <div>
-            <p className="eyebrow light">The pickleball court finder for Batangas</p>
-            <h1><span className="w" style={{ "--w": 0 }}>Find a court.</span>{" "}<span className="w" style={{ "--w": 2 }}><em>Play tonight.</em></span></h1>
-            <p className="lede">Every court in the province on one map, with live hours, directions, weather and an invite you can send to your group.</p>
-            <div className="lp-cta">
-              <Link className="btn big" to="/explore">Find a court<ArrowRight size={20} aria-hidden="true" /></Link>
-              <Link className="btn ghost big" to="/map"><MapPin size={20} aria-hidden="true" />See the map</Link>
-              {canInstall && <button type="button" className="btn ghost big" onClick={install}><Download size={20} aria-hidden="true" />Install app</button>}
-            </div>
-            <dl className="stats"><div><dt>Courts</dt><dd>{nCourts}</dd></div><div><dt>Cities and towns</dt><dd>{nTowns}</dd></div><div><dt>Open now</dt><dd>{nOpen}</dd></div></dl>
-          </div>
-          <PhoneMock list={withHours} />
-        </div>
-      </section>
-
-      <div className="marquee" aria-hidden="true"><div className="marquee-track">{[...towns, ...towns].map((t, i) => <span key={i}>{t}</span>)}</div></div>
-
-      <section className="section reveal">
-        <div className="section-head"><div><p className="eyebrow">Everything you need</p><h2>Made for the way you actually play</h2></div></div>
-        <div className="features">
-          {FEATURES.map(([Icon, title, text]) => <div className="feature" key={title}><span className="step-icon"><Icon size={22} aria-hidden="true" /></span><h3>{title}</h3><p>{text}</p></div>)}
-        </div>
-      </section>
-
-      <section className="section reveal">
-        <div className="steps">{STEPS.map(([n, title, text]) => <div className="step" key={title}><span className="step-n">{n}</span><h3>{title}</h3><p>{text}</p></div>)}</div>
-      </section>
-
-      <section className="section reveal">
-        <div className="section-head"><div><p className="eyebrow">Across the province</p><h2>Courts in every corner of Batangas</h2></div></div>
-        <ProvinceMap />
-      </section>
-
-      <section className="section reveal">
-        <div className="lp-plan">
-          <div>
-            <p className="eyebrow">Plan a game</p><h2>From "who's free?" to "see you there"</h2>
-            <p className="muted">Choose a court, a time and how many players you need. We check the court's hours, write the invite, and add it to your calendar.</p>
-            <Link className="btn primary" to={`/plan?c=${sample.id}`}><CalendarDays size={18} aria-hidden="true" />Plan a game</Link>
-          </div>
-          <div className="invite" aria-hidden="true"><p className="eyebrow light">Invite preview</p><pre>{`🏓 Pickleball at ${sample.name}\n📅 Saturday, 5:00 PM to 7:00 PM\n📍 ${sample.address}\n👥 Looking for 4 players`}</pre></div>
-        </div>
-      </section>
-
-      <Install />
-
-      <section className="section reveal">
-        <div className="band">
-          <h2><Building2 size={28} aria-hidden="true" /> Run a court? Get listed for free.</h2>
-          <p>Add your hours, rates and photos so players can find you. We'll check the details with you first.</p>
-          <Link className="btn" to="/about#contact">List your court</Link>
-        </div>
-      </section>
-
-      <section className="section reveal">
-        <div className="band final">
-          <h2>Ready to play?</h2>
-          <p>Open the app and find a court near you.</p>
-          <Link className="btn big" to="/explore">Find a court<ArrowRight size={20} aria-hidden="true" /></Link>
-        </div>
-      </section>
-    </>
-  );
+    <div className="discovery-strip"><div><span>FIND YOUR COURT</span>{QUICK.map(([label, q, Icon]) => <Link to={"/courts?" + q} key={label}><Icon size={16} />{label}<ArrowUpRight size={14} /></Link>)}</div></div>
+    <section className="section discovery-section" id="discover">
+      <div className="section-head"><div><p className="eyebrow">THE COURT EDIT</p><h2>Find your new favorite.</h2><p className="muted">A local spot for every kind of player.</p></div><Link to="/courts" className="see-all">Browse all courts<ArrowRight size={17} /></Link></div>
+      <div className="discovery-tabs" aria-label="Court suggestions">
+        {[["discover", "Discover"], ["open", "Open now"], ["near", "Near me"], ["saved", "My saved courts"]].map(([id, label]) => <button type="button" className={tab === id ? "selected" : ""} aria-pressed={tab === id} key={id} onClick={() => pickTab(id)}>{id === "saved" && <Heart size={15} />} {label}</button>)}
+        <span className="tab-note"><span className="live-dot" />Hours in Philippine time</span>
+      </div>
+      {tab === "near" && !geo.pos ? <div className="empty"><Locate size={28} /><h3>Find your neighborhood court.</h3><p>Use your location, or choose a town when location is unavailable.</p><button className="btn primary" onClick={() => locate()}>{geo.status === "asking" ? "Finding your location…" : "Find courts near me"}</button></div> : list.length ? <div className="grid home-courts">{list.map(c => <CourtCard key={c.id} court={c} distance={c.distance} />)}</div> : <div className="empty"><Heart size={28} /><h3>{tab === "saved" ? "Keep your favorites close." : "The next game can wait a little."}</h3><p>{tab === "saved" ? "Tap the heart on a court to build your own shortlist." : "No court with listed hours is open right now. Browse the directory to plan ahead."}</p><Link className="btn primary" to="/courts">Browse courts<ArrowRight size={16} /></Link></div>}
+    </section>
+    <section className="section town-section">
+      <div className="section-head"><div><p className="eyebrow">A LITTLE CLOSER TO HOME</p><h2>Where do you want to play?</h2></div><Link to="/map" className="see-all">See the province<ArrowUpRight size={17} /></Link></div>
+      <div className="destination-grid">{towns.slice(0, 6).map(([town, count], i) => <Link to={"/courts?town=" + encodeURIComponent(town)} key={town} className={"destination destination-" + i}><span className="destination-number">0{i + 1}</span><Compass className="destination-art" size={92} strokeWidth={.7} /><div><h3>{town}</h3><p>{count} {count === 1 ? "court" : "courts"} to discover</p></div><ArrowUpRight size={20} /></Link>)}</div>
+    </section>
+    {recent.length > 0 && <section className="section"><div className="section-head"><div><p className="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recently viewed</h2></div></div><div className="grid home-courts">{recent.slice(0, 3).map(c => <CourtCard key={c.id} court={c} />)}</div></section>}
+    <section className="section"><div className="game-banner"><div><p className="eyebrow light">LESS GROUP CHAT. MORE GAME TIME.</p><h2>Make “we should play”<br />an actual plan.</h2><p>Pick a court, set a time, and share an invite.<br />Your next doubles game, sorted.</p><Link className="btn" to="/plan">Plan a game<ArrowRight size={18} /></Link></div><div className="game-ticket"><div className="ticket-top"><CalendarDays size={22} /><span>YOUR NEXT GAME</span><span>✳</span></div><h3>Good friends.<br />Great rallies.</h3><div className="ticket-row"><MapPin size={16} />Your favorite Batangas court</div><div className="ticket-row"><Clock3 size={16} />A time that works for everyone</div><div className="ticket-bottom"><span>ADMIT YOUR WHOLE CREW</span><span>|||| ||| || ||||</span></div></div></div></section>
+    <section className="section how-section"><div className="section-head"><div><p className="eyebrow">FROM DISCOVERY TO FIRST SERVE</p><h2>Three steps. One good game.</h2></div></div><div className="how-grid">{[[Search, "01", "Find your spot", "Search by town, hours, or the amenities that matter to you."], [Navigation, "02", "Check the details", "Explore opening hours and contacts, then get directions."], [CalendarDays, "03", "Bring your people", "Save your favorites and turn a group chat into a game plan."]].map(([Icon, n, title, body]) => <div key={n}><div className="how-top"><Icon size={22} /><span>{n}</span></div><h3>{title}</h3><p>{body}</p></div>)}</div></section>
+    <section className="section contribute-section"><div><Plus size={21} /><span><b>Good courts deserve to be found.</b> Know a spot we’re missing?</span></div><Link to="/about#contact">Suggest a court<ArrowUpRight size={16} /></Link></section>
+  </>;
 }

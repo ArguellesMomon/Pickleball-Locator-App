@@ -8,7 +8,7 @@ import BackButton from "../components/BackButton.jsx";
 import Rail from "../components/Rail.jsx";
 import useSaved from "../useSaved.js";
 import useMedia from "../useMedia.js";
-import { isOpenNow } from "../utils.js";
+import { isOpenNow, copyText } from "../utils.js";
 
 const VIEW_KEY = "pickle-saved-view";
 
@@ -16,7 +16,7 @@ export default function Saved() {
   const { ids, addMany, clear } = useSaved();
   const [params] = useSearchParams();
   const phone = useMedia("(max-width: 600px)");
-  const [view, setViewState] = useState(() => localStorage.getItem(VIEW_KEY) || (phone ? "list" : "grid")); // compact rows suit phones
+  const [view, setViewState] = useState(() => { try { return localStorage.getItem(VIEW_KEY) || (phone ? "list" : "grid"); } catch { return "grid"; } }); // compact rows suit phones
   const [copied, setCopied] = useState(false);
   const [sure, setSure] = useState(false); // "Clear all" asks for a second tap
   const setView = (v) => { setViewState(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* private mode */ } };
@@ -30,7 +30,7 @@ export default function Saved() {
   async function share() {
     const url = `${window.location.origin}/saved?ids=${ids.join(",")}`;
     if (navigator.share) { try { await navigator.share({ title: "My pickleball courts", text: "Courts I want to play at", url }); } catch { /* cancelled */ } return; }
-    await navigator.clipboard.writeText(url);
+    if (!(await copyText(url))) return;
     setCopied(true); setTimeout(() => setCopied(false), 2500);
   }
   function wipe() {

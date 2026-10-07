@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { Locate, X, MapPin } from "lucide-react";
+import useDialog from "../useDialog.js";
 import useGeo, { locate, chooseTown, closeGeoHelp, townCenters } from "../useGeo.js";
 
 const towns = townCenters();
@@ -9,18 +10,12 @@ const towns = townCenters();
 export default function GeoDialog() {
   const { dialog, status } = useGeo();
   const box = useRef(null);
-  useEffect(() => {
-    if (!dialog) return;
-    const onKey = (e) => { if (e.key === "Escape") closeGeoHelp(); };
-    document.addEventListener("keydown", onKey);
-    box.current?.focus();
-    return () => document.removeEventListener("keydown", onKey);
-  }, [dialog]);
+  useDialog(box, closeGeoHelp, dialog);
   if (!dialog) return null;
 
   const ua = navigator.userAgent;
   const ios = /iPhone|iPad|iPod/.test(ua), android = /Android/.test(ua), inApp = /FBAN|FBAV|Instagram|Messenger|Line\/|MicroMessenger|TikTok/.test(ua);
-  const title = status === "unsupported" ? "This browser can't share your location" : status === "error" ? "We couldn't find your location" : "Location is turned off for this site";
+  const title = status === "idle" || status === "ok" ? "Where do you want to play?" : status === "unsupported" ? "This browser can't share your location" : status === "error" ? "We couldn't find your location" : "Location is turned off for this site";
   const steps = ios ? [
     <>Open <b>Settings → Privacy &amp; Security → Location Services</b> and make sure it is <b>On</b>.</>,
     <>Scroll to <b>Safari Websites</b> and choose <b>While Using the App</b>.</>,
@@ -37,8 +32,8 @@ export default function GeoDialog() {
         <span className="geo-icon"><Locate size={26} aria-hidden="true" /></span>
         <h2 id="geo-title">{title}</h2>
         {inApp && <p className="note"><b>Tip:</b> you opened this inside another app (Messenger, Facebook or Instagram), which often blocks location. Tap the menu and choose <b>Open in Safari</b> or <b>Open in Chrome</b>.</p>}
-        {status !== "unsupported" && <ol className="geo-steps">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>}
-        <button type="button" className="btn primary" onClick={() => locate()}><Locate size={18} aria-hidden="true" />Try again</button>
+        {!["unsupported", "idle", "ok"].includes(status) && <ol className="geo-steps">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>}
+        <button type="button" className="btn primary" onClick={() => locate()}><Locate size={18} aria-hidden="true" />{status === "idle" || status === "ok" ? "Use my location" : "Try again"}</button>
         <p className="geo-or"><MapPin size={16} aria-hidden="true" /> Or pick your town and we'll show the courts closest to it</p>
         <div className="geo-towns">{towns.map((t) => <button key={t.name} type="button" className="chip" onClick={() => chooseTown(t.name)}>{t.name}</button>)}</div>
       </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import useDialog from "../useDialog.js";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -11,20 +12,12 @@ export default function Lightbox({ photos, index, title, onClose }) {
   const root = useRef(null), closeBtn = useRef(null), startX = useRef(null), moved = useRef(false);
   const go = (d) => { setZoom(null); setI((c) => (c + d + n) % n); };
 
+  useDialog(root, onClose);
   useEffect(() => {
-    const el = root.current, prevFocus = document.activeElement, prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden"; // the page behind must not scroll
-    closeBtn.current?.focus();
-    const onKey = (e) => { if (e.key === "Escape") onClose(); else if (e.key === "ArrowRight") go(1); else if (e.key === "ArrowLeft") go(-1); };
-    const onFs = () => { if (!document.fullscreenElement) onClose(); }; // leaving browser full screen also closes the viewer
+    const onKey = (e) => { if (e.key === "ArrowRight") go(1); else if (e.key === "ArrowLeft") go(-1); };
     document.addEventListener("keydown", onKey);
-    Promise.resolve(el.requestFullscreen?.()).then(() => document.addEventListener("fullscreenchange", onFs)).catch(() => {});
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("fullscreenchange", onFs);
-      document.body.style.overflow = prevOverflow;
-      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-      prevFocus?.focus?.();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

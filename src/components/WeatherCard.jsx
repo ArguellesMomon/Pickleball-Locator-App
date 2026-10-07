@@ -16,7 +16,7 @@ function verdict(wx) {
 // "Should I go now?" for outdoor courts: temperature, conditions and the next 12 hours of rain chance
 export default function WeatherCard({ court }) {
   const wx = useWeather(court.lat, court.lng);
-  if (wx === false) return null;
+  if (wx === false) return <p className="note wx">Weather is unavailable right now. Check the forecast before heading out.</p>;
   if (wx === null) return <div className="wx wx-load" aria-hidden="true" />;
   const [label, Icon] = describe(wx.code), v = verdict(wx);
   return (
