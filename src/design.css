@@ -18,6 +18,11 @@ button,input,select,textarea{font-family:var(--body)}
 button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
 button{touch-action:manipulation}
 button:not(.clear){min-height:40px}
+/* Fixed-size icon controls use the full button box, including on iOS Safari. */
+.icon-btn,.save,.compare-btn,.clear,.close,.to-top,.fab,.map-ctrls button,.lb-btn,.lb-nav,.rail-btn,.loc-chip button,.seg-toggle button{
+  -webkit-appearance:none;appearance:none;padding:0;min-height:0;line-height:1;flex-shrink:0;
+}
+
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 :focus-visible{outline:3px solid var(--court);outline-offset:4px}
@@ -137,8 +142,8 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .badge.unknown{background:var(--surface-2);color:var(--muted)}
 .save{width:34px;height:34px;background:var(--surface);color:var(--ink);box-shadow:0 2px 9px #1f392d12;border:1px solid var(--line)}
 .card-wrap .save{top:12px;right:12px;min-height:34px}
-.card-wrap .save svg{width:16px}
-.compare-btn{position:absolute;top:53px;right:12px;width:34px;height:34px;min-height:34px!important;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;opacity:0;transform:translateY(-5px);transition:.2s}
+.card-wrap .save svg{width:16px;height:16px}
+.compare-btn{position:absolute;top:53px;right:12px;width:34px;height:34px;min-height:34px!important;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;opacity:0;transform:translateY(-5px);transition:.2s}
 .card-wrap:hover .compare-btn,.card-wrap:focus-within .compare-btn,.compare-btn[aria-pressed="true"]{opacity:1;transform:none}
 .compare-btn[aria-pressed="true"]{background:var(--deep);color:var(--ball)}
 .grid.list .card-body{padding:18px 24px}
