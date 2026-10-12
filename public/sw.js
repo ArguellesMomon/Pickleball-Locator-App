@@ -1,5 +1,5 @@
 // Cache the complete application shell; map tiles and live weather require a connection.
-const CACHE = "pickle-v4";
+const CACHE = "pickle-v5";
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil((async () => {

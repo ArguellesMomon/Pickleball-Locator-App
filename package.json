@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "checklist:export": "node scripts/export-checklist.mjs",
     "checklist:import": "node scripts/import-checklist.mjs",
-    "test": "node scripts/verify.mjs"
+    "test": "node --test tests/*.test.mjs && node scripts/verify.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
