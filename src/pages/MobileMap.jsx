@@ -40,8 +40,8 @@ export default function MobileMap({ filters }) {
   useEffect(() => { if (selectedId && !selected) select(null); }, [selectedId, selected]);
 
   // "full" stops 10px under the search bar, so the bar and the sheet's handle never overlap
-  const full = Math.max(H - sheetBottom - bar - 10, 140);
-  const SNAP = { peek: 112, half: Math.min(Math.round(H * 0.52), full), full }; // visible sheet height in px
+  const full = Math.max(H - sheetBottom - bar - 10, 0);
+  const SNAP = { peek: Math.min(112, full), half: Math.min(Math.round(H * 0.52), full), full }; // visible sheet height in px
   const vis = dragVis ?? SNAP[snap];
 
   useEffect(() => {

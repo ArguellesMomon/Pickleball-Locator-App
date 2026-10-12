@@ -12,6 +12,8 @@ import Toaster from "./components/Toaster.jsx";
 import ScrollTop from "./components/ScrollTop.jsx";
 import useSaved from "./useSaved.js";
 import useTheme from "./useTheme.js";
+import useKeyboardViewport from "./useKeyboardViewport.js";
+import useViewportLock from "./useViewportLock.js";
 import useCompare from "./useCompare.js";
 import courts from "./data/courts.json";
 import { CONTACT_EMAIL, DEVELOPER } from "./config.js";
@@ -38,6 +40,8 @@ export default function App() {
     toggleTheme
   } = useTheme();
   const [searching, setSearching] = useState(false);
+  const viewport = useKeyboardViewport();
+  const shell = useViewportLock(viewport, false);
   useEffect(() => {
     let saved = null,
       poll;
@@ -98,7 +102,7 @@ export default function App() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
-  return <>
+  return <div className="app-shell" ref={shell} style={{ "--keyboard-height": viewport.height + "px", "--keyboard-top": viewport.top + "px" }}>
     <a className="skip" href="#content">Skip to content</a>
     <header className="topbar"><Link to="/" className="brand"><BallMark /><span>pickle<span className="brand-place">batangas</span></span></Link><div className="topbar-right"><nav aria-label="Main navigation">{TABS.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === "/"}><Icon size={19} aria-hidden="true" /><span>{label}</span>{label === "Saved" && ids.length > 0 && <b className="count">{ids.length}</b>}</NavLink>)}</nav><button type="button" className="icon-btn search-trigger" aria-label="Search courts" title="Search (Ctrl+K)" onClick={() => setSearching(true)}><Search size={19} /><kbd>⌘ K</kbd></button><button type="button" className="icon-btn theme-toggle" aria-label={"Switch to " + (theme === "dark" ? "light" : "dark") + " mode"} title={"Switch to " + (theme === "dark" ? "light" : "dark") + " mode"} onClick={toggleTheme}>{theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}</button></div></header>
     <main id="content"><ErrorBoundary resetKey={pathname}><div className="route" key={pathname}><Suspense fallback={<div className="loading" role="status" aria-label="Loading page"><i /></div>}><Routes>
@@ -108,5 +112,5 @@ export default function App() {
     </main>
     {compare.ids.length > 0 && pathname !== "/compare" && pathname !== "/map" && <div className={"compare-tray" + (pathname.startsWith("/courts/") ? " visit-compare" : "")}><GitCompareArrows size={18} /><span>{compare.ids.length} <span className="compare-tray-label">court{compare.ids.length > 1 ? "s" : ""} selected</span></span><Link to="/compare" className="btn primary">Compare<ArrowUpRight size={15} /></Link><button className="clear" aria-label="Clear comparison" onClick={compare.clear}><X size={15} /></button></div>}
     {searching && <QuickSearch onClose={() => setSearching(false)} />}<GeoDialog /><Toaster /><ScrollTop />
-  </>;
+  </div>;
 }

@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
 import "./design.css";
+import "./keyboard.css";
 import App from "./App.jsx";
 
 // Register the service worker (installable app + offline shell) on the live site only

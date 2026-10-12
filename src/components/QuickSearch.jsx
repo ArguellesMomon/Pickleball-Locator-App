@@ -30,7 +30,14 @@ export default function QuickSearch({ onClose }) {
     ];
   }, [q, recent]);
 
-  useEffect(() => { document.getElementById(`qs-option-${active}`)?.scrollIntoView({ block: "nearest" }); }, [active]);
+  useEffect(() => {
+    const option = document.getElementById(`qs-option-${active}`);
+    const list = option?.closest(".qs-list");
+    if (!list) return;
+    const item = option.getBoundingClientRect(), bounds = list.getBoundingClientRect();
+    if (item.bottom > bounds.bottom) list.scrollTop += item.bottom - bounds.bottom;
+    else if (item.top < bounds.top) list.scrollTop += item.top - bounds.top;
+  }, [active]);
 
   const go = (it) => { onClose(); navigate(it.type === "court" ? `/courts/${it.c.id}` : `/courts?town=${encodeURIComponent(it.t)}`); };
   const onKey = (e) => {

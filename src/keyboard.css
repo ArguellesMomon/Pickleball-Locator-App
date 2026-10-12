@@ -1,0 +1,53 @@
+/* Keep editable text readable on phones without blocking manual pinch zoom. */
+@media (max-width: 900px), (pointer: coarse) {
+  :root :is(input, select, textarea, [contenteditable="true"]) { font-size: max(16px, 1rem); }
+}
+
+/* Keep root geometry unchanged; only the app shell follows the visible viewport. */
+html.keyboard-viewport { height: 100%; overflow: hidden; overscroll-behavior: none; scroll-behavior: auto; }
+.keyboard-viewport body { position: fixed; inset: 0; height: 100%; padding-bottom: 0; overflow: hidden; overscroll-behavior: none; }
+.keyboard-viewport #root { height: 100%; min-height: 0; overflow: hidden; }
+.app-shell[data-viewport-locked="true"] {
+  position: fixed; top: var(--keyboard-top, 0px); left: 0; width: 100%; height: var(--keyboard-height, 100dvh);
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden; --keyboard-dock: 52px; --dock: 0px;
+}
+.app-shell[data-viewport-locked="true"] .topbar {
+  position: relative; top: auto; flex-shrink: 0; height: auto; min-height: calc(48px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+}
+.app-shell[data-viewport-locked="true"] .brand { font-size: 21px; }
+.app-shell[data-viewport-locked="true"] .mark { width: 32px; height: 32px; }
+.app-shell[data-viewport-locked="true"] .topbar nav {
+  position: fixed; top: calc(var(--keyboard-top, 0px) + var(--keyboard-height, 100dvh) - var(--keyboard-dock)); bottom: auto; left: 0; right: 0;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--keyboard-dock); margin: 0; gap: 3px;
+  padding: 4px max(8px, env(safe-area-inset-right)) 4px max(8px, env(safe-area-inset-left));
+  background: var(--surface); border: 0; border-top: 1px solid var(--line); border-radius: 0; transform: none;
+}
+.app-shell[data-viewport-locked="true"] .topbar nav a {
+  display: flex; flex-direction: column; justify-content: center; min-width: 0; gap: 3px; padding: 3px 0; font-size: 9px;
+}
+.app-shell[data-viewport-locked="true"] .topbar nav a > svg { display: block; width: 18px; height: 18px; }
+.app-shell[data-viewport-locked="true"] #content {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: none; scroll-behavior: auto;
+  margin-bottom: var(--keyboard-dock); padding-bottom: 12px;
+}
+.app-shell[data-viewport-locked="true"][data-compact="true"] { --keyboard-dock: 44px; }
+.app-shell[data-viewport-locked="true"][data-compact="true"] .topbar { min-height: calc(40px + env(safe-area-inset-top)); }
+.app-shell[data-viewport-locked="true"][data-compact="true"] .topbar nav a { flex-direction: row; gap: 3px; }
+.app-shell[data-viewport-locked="true"][data-compact="true"] .topbar nav .count { top: 0; }
+.keyboard-viewport .qs-backdrop, .keyboard-viewport .geo-backdrop {
+  top: var(--locked-viewport-top, 0px); bottom: auto; height: var(--locked-viewport-height, 100dvh); padding: 12px;
+}
+.keyboard-viewport .qs { display: flex; flex-direction: column; max-height: calc(var(--locked-viewport-height) - 24px); }
+.keyboard-viewport .qs-field, .keyboard-viewport .qs-hint { flex-shrink: 0; }
+.keyboard-viewport .qs-field { padding: 12px; }
+.keyboard-viewport .qs-list { flex: 1; min-height: 0; max-height: none; overscroll-behavior: none; }
+.keyboard-viewport .geo { max-height: calc(var(--locked-viewport-height) - 24px); }
+.keyboard-viewport :is(.qs-list, .geo, .sheet-body, textarea) { overscroll-behavior: none; scroll-behavior: auto; }
+.keyboard-viewport .on-map { --top: 0px; }
+.keyboard-viewport.on-map, .keyboard-viewport body.on-map { --top: 0px; }
+.keyboard-viewport body.on-map #content { overflow: hidden; padding-bottom: 0; }
+.keyboard-viewport body.on-map .route, .keyboard-viewport .mmap, .keyboard-viewport .split { height: 100%; min-height: 0; }
+.keyboard-viewport .mmap .sheet { bottom: 8px; transition: none; }
+.keyboard-viewport .mmap :is(.leaflet-bottom, .map-legend) { transition: none; }
+.keyboard-viewport :is(.compare-tray, .cta-bar, .toast, .to-top) { display: none; }

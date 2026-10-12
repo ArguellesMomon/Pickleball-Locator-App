@@ -29,6 +29,8 @@ The old `/explore` link redirects to Discover. Press **/** or **Ctrl/Cmd+K** to 
 
 Light and dark mode follow the device preference on first visit. The header toggle saves the chosen theme.
 Structural styles live in `src/styles.css`; colors, component styling, and responsive layouts live in `src/design.css`.
+Mobile editable fields use at least 16px text to avoid focus zoom while manual pinch zoom remains available. A shared keyboard viewport lock keeps navigation above the keyboard, scrolls content inside its container, and lets input positioning settle before adjustment. Map sheets shrink to the available space, and quick search scrolls only its results list.
+
 Motion respects the visitor’s reduced-motion preference. Modals lock background scrolling, contain keyboard focus, and restore focus after closing.
 
 ## Court data and artwork
